@@ -1,3 +1,4 @@
+
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -13,23 +14,17 @@ export const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
 
-/*
- * Security headers
- */
 app.use(
   helmet({
     crossOriginResourcePolicy: {
-      policy: "same-site"
+      policy: "same-site",
     },
     referrerPolicy: {
-      policy: "no-referrer"
-    }
+      policy: "no-referrer",
+    },
   })
 );
 
-/*
- * Restrict browser requests to the MakerBench frontend.
- */
 app.use(
   cors({
     origin: env.FRONTEND_ORIGIN,
@@ -40,44 +35,37 @@ app.use(
       "PUT",
       "PATCH",
       "DELETE",
-      "OPTIONS"
+      "OPTIONS",
     ],
     allowedHeaders: [
       "Content-Type",
-      "Authorization"
-    ]
+      "Authorization",
+    ],
   })
 );
 
-/*
- * Request body limits.
- */
 app.use(
   express.json({
-    limit: "1mb"
+    limit: "1mb",
   })
 );
 
 app.use(
   express.urlencoded({
     extended: false,
-    limit: "1mb"
+    limit: "1mb",
   })
 );
 
-/*
- * Clerk authentication/session middleware.
- */
 app.use(
   clerkMiddleware({
-    authorizedParties
+    authorizedParties,
   })
 );
 
 /*
- * Authentication-sensitive rate limiter.
- *
- * 5 requests per 15 minutes per IP.
+ * Authentication rate limit:
+ * maximum 5 requests per 15 minutes per IP.
  */
 const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -85,27 +73,27 @@ const authRateLimit = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: {
-    error: "TOO_MANY_REQUESTS"
-  }
+    error: "TOO_MANY_REQUESTS",
+  },
 });
 
 /*
- * API routes.
- */
-app.use("/api", apiRouter);
-
-/*
- * Authentication-sensitive endpoints
- * will use authRateLimit when their routes are added.
+ * Keep authentication-sensitive API endpoints
+ * behind the rate limiter.
  */
 app.use("/api/auth", authRateLimit);
+
+/*
+ * Main API.
+ */
+app.use("/api", apiRouter);
 
 /*
  * 404 handler.
  */
 app.use((_req, res) => {
   res.status(404).json({
-    error: "NOT_FOUND"
+    error: "NOT_FOUND",
   });
 });
 
