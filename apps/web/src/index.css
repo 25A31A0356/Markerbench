@@ -12,10 +12,8 @@
     "Segoe UI",
     sans-serif;
 
-  color: #e5e7eb;
+  color-scheme: dark;
   background: #020617;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
 }
 
 * {
@@ -31,17 +29,5 @@ body,
 
 body {
   min-width: 320px;
-  min-height: 100vh;
   background: #020617;
-}
-
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
 }
