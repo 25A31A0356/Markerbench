@@ -5,6 +5,8 @@ import rateLimit from "express-rate-limit";
 import { clerkMiddleware } from "@clerk/express";
 
 import { env, authorizedParties } from "./config.js";
+import { apiRouter } from "./routes/index.js";
+import { errorHandler } from "./middleware/error.js";
 
 export const app = express();
 
@@ -26,19 +28,29 @@ app.use(
 );
 
 /*
- * Only allow requests from the MakerBench frontend.
+ * Restrict browser requests to the MakerBench frontend.
  */
 app.use(
   cors({
     origin: env.FRONTEND_ORIGIN,
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS"
+    ],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization"
+    ]
   })
 );
 
 /*
- * Limit request body size to reduce abuse.
+ * Request body limits.
  */
 app.use(
   express.json({
@@ -54,7 +66,7 @@ app.use(
 );
 
 /*
- * Clerk validates the authentication session.
+ * Clerk authentication/session middleware.
  */
 app.use(
   clerkMiddleware({
@@ -63,10 +75,11 @@ app.use(
 );
 
 /*
- * Authentication-sensitive endpoints:
+ * Authentication-sensitive rate limiter.
+ *
  * 5 requests per 15 minutes per IP.
  */
-export const authRateLimit = rateLimit({
+const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
   standardHeaders: "draft-8",
@@ -77,19 +90,26 @@ export const authRateLimit = rateLimit({
 });
 
 /*
- * Temporary protected API endpoints.
- * These will be replaced/expanded as we add routes.
+ * API routes.
  */
-app.get("/api", (_req, res) => {
-  res.json({
-    name: "MakerBench API",
-    version: "1.0.0"
+app.use("/api", apiRouter);
+
+/*
+ * Authentication-sensitive endpoints
+ * will use authRateLimit when their routes are added.
+ */
+app.use("/api/auth", authRateLimit);
+
+/*
+ * 404 handler.
+ */
+app.use((_req, res) => {
+  res.status(404).json({
+    error: "NOT_FOUND"
   });
 });
 
-app.get("/api/health", (_req, res) => {
-  res.json({
-    ok: true,
-    service: "makerbench-api"
-  });
-});
+/*
+ * Global error handler.
+ */
+app.use(errorHandler);
