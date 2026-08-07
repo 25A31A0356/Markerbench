@@ -40,63 +40,65 @@ enum PaymentStatus {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  clerkUserId String   @unique
-  email       String   @unique
-  displayName String?
+  id           String    @id @default(cuid())
+  clerkUserId  String    @unique
+  email        String    @unique
+  displayName  String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  projects     Project[]
+  listings     Listing[]
+  orders       Order[]
+  reviews      Review[]
 
-  projects Project[]
-  listings Listing[]
-  orders   Order[]
-  reviews  Review[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
 
   @@index([deletedAt])
 }
 
 model Project {
-  id       String        @id @default(cuid())
-  ownerId  String
-  name     String
-  type     ProjectType
-  status   ProjectStatus @default(ACTIVE)
+  id           String        @id @default(cuid())
+  ownerId      String
+  owner        User          @relation(fields: [ownerId], references: [id], onDelete: Restrict)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  name         String
+  type         ProjectType
+  status       ProjectStatus @default(ACTIVE)
 
-  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Restrict)
-  listings Listing[]
+  listings     Listing[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
 
   @@index([ownerId, deletedAt])
   @@index([status, deletedAt])
 }
 
 model Listing {
-  id          String        @id @default(cuid())
-  sellerId    String
-  projectId   String?
+  id              String        @id @default(cuid())
+  sellerId        String
+  seller          User          @relation(fields: [sellerId], references: [id], onDelete: Restrict)
 
-  title       String
-  description String?
+  projectId       String?
+  project         Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
-  priceCents Int
-  currency   String @default("USD")
-  stock      Int?
+  title           String
+  description     String?
 
-  status ListingStatus @default(DRAFT)
+  priceCents      Int
+  currency        String        @default("USD")
+  stock           Int?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  status          ListingStatus @default(DRAFT)
 
-  seller     User      @relation(fields: [sellerId], references: [id], onDelete: Restrict)
-  project    Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  orderItems OrderItem[]
-  reviews    Review[]
+  orderItems      OrderItem[]
+  reviews         Review[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
 
   @@index([sellerId, deletedAt])
   @@index([projectId, deletedAt])
@@ -104,59 +106,61 @@ model Listing {
 }
 
 model Order {
-  id            String        @id @default(cuid())
-  buyerId       String
+  id             String        @id @default(cuid())
+  buyerId        String
+  buyer          User          @relation(fields: [buyerId], references: [id], onDelete: Restrict)
 
-  status        OrderStatus   @default(PENDING)
-  paymentStatus PaymentStatus @default(PENDING)
+  status         OrderStatus   @default(PENDING)
+  paymentStatus  PaymentStatus @default(PENDING)
 
-  totalCents Int
-  currency   String @default("USD")
+  totalCents     Int
+  currency       String        @default("USD")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  items          OrderItem[]
 
-  buyer User        @relation(fields: [buyerId], references: [id], onDelete: Restrict)
-  items OrderItem[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
 
   @@index([buyerId, deletedAt])
   @@index([status, deletedAt])
 }
 
 model OrderItem {
-  id        String @id @default(cuid())
-  orderId   String
-  listingId String
+  id              String    @id @default(cuid())
 
-  quantity       Int
-  unitPriceCents Int
+  orderId         String
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Restrict)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  listingId       String
+  listing         Listing   @relation(fields: [listingId], references: [id], onDelete: Restrict)
 
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  listing Listing @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  quantity        Int
+  unitPriceCents  Int
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
 
   @@index([orderId, deletedAt])
   @@index([listingId, deletedAt])
 }
 
 model Review {
-  id        String @id @default(cuid())
-  authorId  String
-  listingId String
+  id          String    @id @default(cuid())
 
-  rating Int
-  body   String?
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Restrict)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  listingId   String
+  listing     Listing   @relation(fields: [listingId], references: [id], onDelete: Restrict)
 
-  author  User    @relation(fields: [authorId], references: [id], onDelete: Restrict)
-  listing Listing @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  rating      Int
+  body        String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   @@unique([authorId, listingId])
   @@index([listingId, deletedAt])
