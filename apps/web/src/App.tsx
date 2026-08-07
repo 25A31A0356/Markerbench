@@ -1,6 +1,16 @@
 import { useState } from "react";
+import {
+  SignInButton,
+  SignUpButton,
+  UserButton,
+  SignedIn,
+  SignedOut,
+} from "@clerk/clerk-react";
 
-type ProjectType = "DESIGN_3D" | "CIRCUIT" | "CODEBLOCK";
+type ProjectType =
+  | "DESIGN_3D"
+  | "CIRCUIT"
+  | "CODEBLOCK";
 
 const projectTypes: {
   type: ProjectType;
@@ -12,35 +22,87 @@ const projectTypes: {
     type: "DESIGN_3D",
     title: "3D Design",
     description: "Create and organize 3D projects.",
-    icon: "◇"
+    icon: "◇",
   },
   {
     type: "CIRCUIT",
     title: "Circuit",
     description: "Build and document electronic projects.",
-    icon: "⌁"
+    icon: "⌁",
   },
   {
     type: "CODEBLOCK",
     title: "Codeblock",
     description: "Create programmable maker projects.",
-    icon: "</>"
-  }
+    icon: "</>",
+  },
 ];
 
-export default function App() {
-  const [modalOpen, setModalOpen] = useState(false);
+function AuthScreen() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-slate-100">
+      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center shadow-2xl">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-indigo-600 text-xl font-bold">
+          M
+        </div>
+
+        <h1 className="mt-5 text-2xl font-bold">
+          Welcome to MakerBench
+        </h1>
+
+        <p className="mt-2 text-sm leading-6 text-slate-400">
+          Sign in to create and manage your maker projects.
+        </p>
+
+        <div className="mt-7 flex flex-col gap-3">
+          <SignInButton mode="modal">
+            <button className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-500">
+              Sign in
+            </button>
+          </SignInButton>
+
+          <SignUpButton mode="modal">
+            <button className="w-full rounded-lg border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 hover:bg-slate-800">
+              Create account
+            </button>
+          </SignUpButton>
+        </div>
+
+        <p className="mt-6 text-xs text-slate-600">
+          Authentication is securely handled by Clerk.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function Dashboard() {
+  const [modalOpen, setModalOpen] =
+    useState(false);
+
   const [selectedType, setSelectedType] =
     useState<ProjectType>("DESIGN_3D");
 
-  const [projectName, setProjectName] = useState("");
+  const [projectName, setProjectName] =
+    useState("");
 
   const createProject = () => {
     if (!projectName.trim()) {
       return;
     }
 
-    // Editor functionality is intentionally not implemented yet.
+    /*
+     * API integration will be connected next.
+     *
+     * Editor functionality is intentionally
+     * not implemented yet.
+     */
+
+    console.log({
+      name: projectName.trim(),
+      type: selectedType,
+    });
+
     setProjectName("");
     setModalOpen(false);
   };
@@ -64,14 +126,12 @@ export default function App() {
             Documentation
           </button>
 
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-sm font-medium">
-            U
-          </div>
+          <UserButton />
         </div>
       </header>
 
       <div className="flex min-h-[calc(100vh-4rem)]">
-        {/* Project sidebar */}
+        {/* Sidebar */}
         <aside className="hidden w-64 shrink-0 border-r border-slate-800 bg-slate-950 md:flex md:flex-col">
           <div className="flex items-center justify-between border-b border-slate-800 px-4 py-4">
             <span className="text-sm font-semibold">
@@ -135,8 +195,9 @@ export default function App() {
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Create a project to start working in MakerBench.
-                The project editor will be added later.
+                Create a project to start working in
+                MakerBench. The project editor will be
+                added later.
               </p>
 
               <button
@@ -150,7 +211,7 @@ export default function App() {
         </main>
       </div>
 
-      {/* New Project modal */}
+      {/* New Project Modal */}
       {modalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
@@ -257,5 +318,19 @@ export default function App() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <>
+      <SignedOut>
+        <AuthScreen />
+      </SignedOut>
+
+      <SignedIn>
+        <Dashboard />
+      </SignedIn>
+    </>
   );
 }
