@@ -1,26 +1,20 @@
 import { app } from "./app.js";
 import { env } from "./config.js";
-import { prisma } from "./db.js";
 
 const server = app.listen(env.PORT, () => {
   console.log(
-    `MakerBench API listening on http://localhost:${env.PORT}`
+    `MakerBench API listening on port ${env.PORT}`
   );
 });
 
-const shutdown = async (signal: string) => {
-  console.log(`${signal}: shutting down`);
+function shutdown(signal: string) {
+  console.log(`${signal} received. Shutting down...`);
 
-  server.close(async () => {
-    await prisma.$disconnect();
+  server.close(() => {
+    console.log("HTTP server closed.");
     process.exit(0);
   });
-};
+}
 
-process.on("SIGINT", () => {
-  void shutdown("SIGINT");
-});
-
-process.on("SIGTERM", () => {
-  void shutdown("SIGTERM");
-});
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
