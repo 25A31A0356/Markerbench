@@ -1,17 +1,22 @@
-import type { RequestHandler } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { getAuth } from "@clerk/express";
 
-export const requireUser: RequestHandler = (req, res, next) => {
-  const auth = getAuth(req);
+export function requireUser(
+  _req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const auth = getAuth(res);
 
-  if (!auth.isAuthenticated || !auth.userId) {
+  if (!auth.userId) {
     res.status(401).json({
       error: "UNAUTHORIZED"
     });
+
     return;
   }
 
   res.locals.clerkUserId = auth.userId;
 
   next();
-};
+}
