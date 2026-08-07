@@ -1,30 +1,29 @@
-import type { RequestHandler } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 
-export const validate = (schema: z.ZodType): RequestHandler => {
-  return (req, res, next) => {
+export function validate(schema: z.ZodType) {
+  return (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
     const result = schema.safeParse({
       body: req.body,
       params: req.params,
-      query: req.query
+      query: req.query,
     });
 
     if (!result.success) {
       res.status(400).json({
         error: "VALIDATION_ERROR",
-        issues: result.error.issues
+        details: result.error.flatten(),
       });
+
       return;
     }
 
-    const data = result.data as {
-      body?: unknown;
-    };
-
-    if (data.body !== undefined) {
-      req.body = data.body;
-    }
+    req.body = result.data.body;
 
     next();
   };
-};
+}
