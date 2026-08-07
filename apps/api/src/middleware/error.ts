@@ -1,23 +1,29 @@
-import type { ErrorRequestHandler } from "express";
+import type {
+  Request,
+  Response,
+  NextFunction,
+} from "express";
+
 import { ZodError } from "zod";
 
-export const errorHandler: ErrorRequestHandler = (
-  err,
-  _req,
-  res,
-  _next
-) => {
-  console.error(err);
+export function errorHandler(
+  error: unknown,
+  _req: Request,
+  res: Response,
+  _next: NextFunction
+) {
+  console.error(error);
 
-  if (err instanceof ZodError) {
+  if (error instanceof ZodError) {
     res.status(400).json({
       error: "VALIDATION_ERROR",
-      issues: err.issues
+      details: error.flatten(),
     });
+
     return;
   }
 
   res.status(500).json({
-    error: "INTERNAL_SERVER_ERROR"
+    error: "INTERNAL_SERVER_ERROR",
   });
-};
+}
