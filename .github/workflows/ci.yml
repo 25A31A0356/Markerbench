@@ -27,9 +27,9 @@ jobs:
 
       - name: Generate Prisma client
         run: npm run db:generate
-        
+
       - name: Validate Prisma schema
-  run: npx prisma validate --schema=apps/api/prisma/schema.prisma
+        run: npx prisma validate --schema=apps/api/prisma/schema.prisma
 
       - name: Build API
         run: npm run build:api
