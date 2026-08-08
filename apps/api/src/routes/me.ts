@@ -1,74 +1,47 @@
 import { Router } from "express";
-import { z } from "zod";
 
 import { prisma } from "../db.js";
 import { requireUser } from "../middleware/auth.js";
-import { validate } from "../middleware/validate.js";
-
-const updateProfileSchema = z.object({
-  body: z.object({
-    email: z.email(),
-    displayName: z
-      .string()
-      .trim()
-      .min(1)
-      .max(100)
-      .optional()
-  }),
-  params: z.object({}),
-  query: z.object({})
-});
 
 export const meRouter = Router();
 
-/*
- * Get the authenticated MakerBench user.
- */
-meRouter.get("/", requireUser, async (_req, res, next) => {
-  try {
-    const user = await prisma.user.findFirst({
-      where: {
-        clerkUserId: res.locals.clerkUserId,
-        deletedAt: null
-      }
-    });
-
-    res.json({
-      user
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-/*
- * Create/update the application profile for
- * the currently authenticated Clerk user.
- */
-meRouter.put(
+meRouter.get(
   "/",
   requireUser,
-  validate(updateProfileSchema),
-  async (req, res, next) => {
+  async (_req, res, next) => {
     try {
-      const user = await prisma.user.upsert({
-        where: {
-          clerkUserId: res.locals.clerkUserId
-        },
-        create: {
-          clerkUserId: res.locals.clerkUserId,
-          email: req.body.email,
-          displayName: req.body.displayName
-        },
-        update: {
-          email: req.body.email,
-          displayName: req.body.displayName,
-          deletedAt: null
-        }
-      });
+      const clerkUserId =
+        res.locals.clerkUserId as string;
+
+      /*
+       * For now, Clerk is the source of truth
+       * for authentication identity.
+       *
+       * The frontend does not provide clerkUserId.
+       */
+      const user =
+        await prisma.user.findFirst({
+          where: {
+            clerkUserId,
+            deletedAt: null,
+          },
+        });
+
+      if (!user) {
+        res.status(404).json({
+          error: "USER_NOT_PROVISIONED",
+        });
+
+        return;
+      }
 
       res.json({
-        user
+        user: {
+          id: user.id,
+          clerkUserId: user.clerkUserId,
+          email: user.email,
+          displayName: user.displayName,
+        },
       });
     } catch (error) {
       next(error);
