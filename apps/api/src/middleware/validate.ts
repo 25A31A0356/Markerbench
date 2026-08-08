@@ -1,7 +1,14 @@
-import type { Request, Response, NextFunction } from "express";
+import type {
+  Request,
+  Response,
+  NextFunction,
+} from "express";
+
 import { z } from "zod";
 
-export function validate(schema: z.ZodType) {
+export function validate(
+  schema: z.ZodTypeAny
+) {
   return (
     req: Request,
     res: Response,
@@ -16,13 +23,21 @@ export function validate(schema: z.ZodType) {
     if (!result.success) {
       res.status(400).json({
         error: "VALIDATION_ERROR",
-        details: result.error.flatten(),
+        details: result.error.issues,
       });
 
       return;
     }
 
-    req.body = result.data.body;
+    const data = result.data as {
+      body?: unknown;
+      params?: unknown;
+      query?: unknown;
+    };
+
+    if (data.body !== undefined) {
+      req.body = data.body;
+    }
 
     next();
   };
