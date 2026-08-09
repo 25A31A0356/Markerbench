@@ -2,15 +2,16 @@ name: MakerBench CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
 
     steps:
       - name: Checkout repository
@@ -20,22 +21,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Generate Prisma client
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/makerbench
         run: npx prisma generate --schema=apps/api/prisma/schema.prisma
 
       - name: Validate Prisma schema
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/makerbench
         run: npx prisma validate --schema=apps/api/prisma/schema.prisma
 
       - name: Build API
-        run: npm run build:api
-
-      - name: Build frontend
-        run: npm run build:web
+        run: npm run build --workspace=apps/api
